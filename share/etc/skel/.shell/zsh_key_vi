@@ -1,0 +1,60 @@
+# Key bindings 
+
+bindkey -v
+
+# remove "^[" vi-cmd-mode
+# too easy to confuse people
+bindkey -r "^["
+bindkey "^[ " vi-cmd-mode
+
+KEYTIMEOUT=10
+
+# search backwards for a line which has the entire starting point
+# up to the cursor position the same as the current line.
+bindkey -a 'k' history-beginning-search-backward
+bindkey -a 'j' history-beginning-search-forward
+
+bindkey '^p' history-beginning-search-backward
+bindkey '^n' history-beginning-search-forward
+
+bindkey '\ei' menu-expand-or-complete
+bindkey '\eI' reverse-menu-complete
+
+bindkey "\ep" history-search-backward
+bindkey "\en" history-search-forward
+
+bindkey "\e." insert-last-word
+bindkey "\e>" copy-prev-shell-word
+bindkey "\eb" backward-word
+bindkey "\ef" forward-word
+bindkey "\ed" kill-word
+bindkey "\e" backward-kill-word
+bindkey "^b" backward-char
+bindkey "^f" forward-char
+bindkey "^w" backward-kill-word
+bindkey "^k" kill-line
+bindkey "^u" kill-whole-line
+bindkey "^d" delete-char-or-list
+bindkey "^a" beginning-of-line
+bindkey "^e" end-of-line
+
+
+case $TERM in
+	linux|rxvt-unicode|mlterm|screen)
+  bindkey "[2~" yank                 ## Insert
+  bindkey "[3~" delete-char          ## Delete
+  bindkey "[5~" up-line-or-history   ## PageUp
+  bindkey "[6~" down-line-or-history ## PageDown
+  bindkey "[1~" beginning-of-line    ## Home
+  bindkey "[4~" end-of-line          ## End
+;;
+	xterm|rxvt)
+  bindkey "[2~" yank                 ## Insert
+  bindkey "[3~" delete-char          ## Delete
+  bindkey "[5~" up-line-or-history   ## PageUp
+  bindkey "[6~" down-line-or-history ## PageDown
+  bindkey "[7~" beginning-of-line    ## Home
+  bindkey "[8~" end-of-line          ## End
+;;
+esac
+

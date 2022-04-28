@@ -1,0 +1,288 @@
+#!/bin/sh
+
+# http://bethesignal.org/dotfiles/
+
+function l()
+{
+	[[ $# = 0 ]] && {
+		less
+		return
+	}
+
+	local opt_less=
+
+	test -n "$(find "$@" -maxdepth 0 -size +1M 2>/dev/null)"  && {
+		opt_less+='-n '
+
+		if [[ "$1" =~ 'log' ]]; then
+			opt_less+='+G '
+		elif [[ "$PWD" =~ 'log' && ! "$1" =~ ^/ ]]; then
+			opt_less+='+G '
+		fi
+	}
+
+	less $opt_less "$@"
+}
+
+function _cd_git_grep()
+{
+	cd "$1" || return
+	shift
+
+	command git --no-pager grep --line-number "$@" |
+	sed "s,^,$PWD/,"
+}
+
+function f()
+{
+	local file="/tmp/f_${*//[^-=a-zA-Z.0-9_]/_}"
+
+	(
+		c_kernel_tests=/c/kernel-tests
+		[[ -d $c_kernel_tests/.git ]] || # @ inn/bee
+		c_kernel_tests=/c/repo/0day-kernel-tests
+
+		_cd_git_grep /c/lkp-tests	"$@"
+		_cd_git_grep /c/lkp-core	"$@"
+		_cd_git_grep $c_kernel_tests	"$@"
+	) > "$file"
+
+	local lines=$(wc -l < $file)
+	(( lines ++ ))
+	local search="${@: -1}"
+	search="${search//\//\\/}"
+	vim +"cgetfile $file" +"copen $lines" +/"$search"
+}
+
+# vi patch
+function vp() { vim `quilt top`; }
+
+# vi tmux scroll buffer
+function etc()
+{
+	local lines=$1
+	test -n "$lines" || lines=-1000
+
+	local vim=vim.gtk3
+	if test -n "$DISPLAY"; then
+		command -v $vim >/dev/null || vim=vim.gnome
+		command -v $vim >/dev/null || vim=vim.gtk
+		command -v $vim >/dev/null || vim=vim
+	else
+		vim=vim
+	fi
+	tmux capture-pane -J -p -e -S $lines |
+	awk '
+NR == 1 { line = $0; next }
+/^\x1B/ { print line "\x1B[0m"; line = $0; next; }
+// { print line; line = $0; next; }
+END { print line "\x1B[0m"; }
+' |
+	$vim + +'set nowrap' +'AnsiEsc' -
+	# sed "s/$/\x1B\[0m/" |
+}
+
+function et()
+{
+	local lines=$1
+	test -n "$lines" || lines=-1000
+
+	local vim=vim.gtk3
+	if test -n "$DISPLAY"; then
+		command -v $vim >/dev/null || vim=vim.gnome
+		command -v $vim >/dev/null || vim=vim.gtk
+		command -v $vim >/dev/null || vim=vim
+	else
+		vim=vim
+	fi
+	tmux capture-pane -J -p -S $lines |
+	$vim + -
+}
+
+# A life without 'diff'? Unimaginably!!!!11!
+function mdiff() { diff -rupNd "$1" "$2" > diff.`date "+%Y-%m-%d"`."$1"; }
+function udiff() { diff -urd $* | egrep -v "^Only in |^Binary files "; }
+function cdiff() { diff -crd $* | egrep -v "^Only in |^Binary files "; }
+
+# mkdir && cd
+function mcd() { mkdir "$@" && cd "$@"; }
+
+# cd && ls
+function cl() { cd $1 && ls -a --color=auto; }
+
+# Use 'view' to read manpages, if u want colors, regex - search, ...
+# like vi(m).
+# It's shameless stolen from <http://www.vim.org/tips/tip.php?tip_id=167>
+function vman() {
+	command man "$@" | col -b | /usr/bin/view -c 'set ft=man nomod nolist' -c 'runtime macros/less.vim' --noplugin -
+}
+
+# http://unix.stackexchange.com/questions/148/colorizing-your-terminal-and-shell-environment
+function _colorman() {
+  env \
+    LESS_TERMCAP_mb=$(printf "\e[1;35m") \
+    LESS_TERMCAP_md=$(printf "\e[1;34m") \
+    LESS_TERMCAP_me=$(printf "\e[0m") \
+    LESS_TERMCAP_se=$(printf "\e[0m") \
+    LESS_TERMCAP_so=$(printf "\e[7;40m") \
+    LESS_TERMCAP_ue=$(printf "\e[0m") \
+    LESS_TERMCAP_us=$(printf "\e[1;33m") \
+      "$@"
+}
+function man() { _colorman man "$@"; }
+function perldoc() { command perldoc -n less "$@" |man -l -; }
+
+function mirror() {
+	lftp -c "mirror $@"
+}
+
+function start() { /etc/init.d/$1 start; }
+function stop()  { /etc/init.d/$1 stop;  }
+
+function gt() {
+	grep "$@" | sort | uniq -c | sort -nr | less
+}
+
+function egg() {
+	local search="${@: -1}"
+	search="${search//\//\\/}"
+	vim +/"${search}" $(git grep -l $@)
+}
+
+function vc() {
+	if [[ $# == 1 && ! -e $1  ]]; then
+		if [[ $1 == *.rb ]]; then
+			echo '#!/usr/bin/ruby' > $1
+			chmod +x $1
+		else # [[ $1 == *.sh ]]; then
+			echo '#!/bin/bash' > $1
+			chmod +x $1
+		fi
+	fi
+	vi $@
+}
+
+function lc() {
+	ls --color | cut -c-$COLUMNS
+}
+
+function pssk() {
+	local processes
+	processes=`ps aux`
+	echo "$processes" | grep -E "$*" | awk '{print $2}' | xargs kill
+}
+
+function df() {
+	if [[ $# = 0 && -x /usr/bin/pydf ]]; then
+		command pydf
+	else
+		command df -h $*
+	fi
+}
+
+function bbs() {
+	if [[ "$LANG" = "zh_CN.UTF-8" ]]; then
+		luit -encoding GBK  telnet -8 bbs6
+	elif [[ "$LANG" = "zh_CN.GBK" || "$LC_ALL" = "zh_CN.GBK" ]]; then
+		telnet -8 bbs6
+	fi
+}
+
+tc () {
+	tar -cz --force-local -f `basename $1`-`date +%F`.tar.gz $@
+}
+
+ai () {
+	local sudo=sudo
+	[[ $USER = 'root' ]] && sudo=
+
+	local log=/var/log/apt-get-install.log
+
+	[[ -f $log ]] || {
+		$sudo touch $log
+		$sudo chmod 666 $log
+	}
+
+	echo "$@" >> $log
+
+	$sudo apt-get install "$@"
+}
+
+av () {
+	dpkg -l $@
+	apt-cache madison $@
+}
+
+ad () {
+        apt-cache show $@ | more
+}
+
+dL () {
+        dpkg -L $@ | more
+}
+
+# list the files of a package
+#function al() {
+#	local listfile=/var/lib/dpkg/info/${1}.list
+#	[[ -f $listfile ]] && less $listfile
+#}
+
+function lw () {
+	local whichcmd=`command which $1`
+	[[ -n "$whichcmd" ]] && ls -l "$whichcmd" && ldd "$whichcmd";
+}
+
+function nocomment () { cat $* | sed -e '/^[ ]*#.*/d' -e 's/[ ]*#.*$//' | uniq ; }
+
+function nfsmount() { mount -o tcp,soft,rsize=32768,wsize=32768 $* ; }
+
+function lomount() { mount -o loop  "$1" "$2" ; }
+function isomount() { mount -t iso9660 -o loop  "$1" "${2:-/mnt/iso}" ; }
+
+function pp () {		# ps
+	local pids="$(pidof $1)"
+	[[ -n $pids ]] && ps -fp $pids
+}
+
+# view log with colors
+if [[ -x /usr/bin/ccze ]]; then
+function lg() { /usr/bin/ccze -AC < $* | less ; }
+fi
+
+# function make() {
+#         local cpus=`grep -c processor /proc/cpuinfo`
+#         if [[ -f .make-env ]]; then
+#                 env $(< .make-env) make -j$cpus $@
+#         else
+#                 make -j$cpus $@
+#         fi
+# }
+
+# colorizing the output of make
+# if [[ -x /usr/bin/colormake.pl ]]; then
+#         /usr/bin/make -j $cpus "$@" 2>&1 | colormake.pl
+# fi
+
+# Often needed (if i rape '$LS_COLORS' again *g*)
+function _colors() {
+ esc="\033["
+ echo -e "\t 40\t 41\t 42\t 43\t 44\t 45\t 46\t 47"
+ for fore in 30 31 32 33 34 35 36 37; do
+   line1="$fore  "
+   line2="    "
+   for back in 40 41 42 43 44 45 46 47; do
+     line1="${line1}${esc}${back};${fore}m Normal  ${esc}0m"
+     line2="${line2}${esc}${back};${fore};1m Bold    ${esc}0m"
+   done
+   echo -e "$line1\n$line2"
+ done
+}
+
+function test_color () {
+	echo -e "\e[38;$1;$(($2))m$1 bytes \e[0m\e[48;$1;$(($2))mcolor $2\e[0m"
+}
+
+# Use vim to convert plaintext to HTML
+function 2html() {
+vim -n -c ':so $VIMRUNTIME/syntax/2html.vim' -c ':wqa' $1 >/dev/null 2>&1
+}

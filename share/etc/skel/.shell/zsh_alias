@@ -1,0 +1,232 @@
+alias cd/='cd /'
+
+alias 1='cd -'
+alias 2='cd -2'
+alias 3='cd -3'
+alias 4='cd -4'
+alias 5='cd -5'
+alias 6='cd -6'
+alias 7='cd -7'
+alias 8='cd -8'
+alias 9='cd -9'
+
+# named dirs
+hash -d music=/home/music
+hash -d dpkg=/var/lib/dpkg
+hash -d apt=/var/cache/apt
+hash -d zfun=/usr/share/zsh/$ZSH_VERSION/functions
+
+# hash -d vim=$HOME/.vim
+# hash -d kcfg=$HOME/.kde/share/config
+# hash -d kapp=$HOME/.kde/share/apps
+# hash -d mutt=$HOME/.mutt
+# hash -d shell=$HOME/.shell
+
+#hash -d Z=$HOME/.zsh
+#hash -d W=/var/www
+#hash -d P=$HOME/public_html
+#hash -d linux=/lib/modules/$(command uname -r)/build/
+
+
+# No spelling correction
+
+alias man='nocorrect man'
+alias mysql='nocorrect mysql'
+alias mysqlshow='nocorrect mysqlshow'
+alias mkdir='nocorrect mkdir'
+alias mv='nocorrect mv'
+#  alias find='noglob find'
+alias apt-cache='noglob apt-cache'
+
+# user-friendly version of zmv
+alias mmv='noglob zmv -W'
+
+alias run-help >&/dev/null && unalias run-help
+alias help='run-help'
+#alias which >&/dev/null && unalias which
+
+# merge history events of other zsh instances
+alias hh='fc -RI'
+
+# List only directories and symbolic
+# links that point to directories
+alias lsd='ls -ld *(-/DN)'
+
+# List only file beginning with "."
+alias lsa='ls -ld .*'
+
+# list 10 newest files
+alias lsn='ls -dl *(om[1,10])'
+
+# Suffix aliases
+# To be safe, only define file VIEWERS :-)
+if alias -s &>/dev/null; then
+
+alias -s dvi=xdvi
+alias -s pdf=xpdf
+alias -s ps=gv
+alias -s eps=gv
+alias -s htm=w3m
+alias -s html=w3m
+alias -s chm=xchm
+
+local suffix
+for suffix in doc rtf odt odp sxw
+do
+        alias -s $suffix=oowriter
+done
+
+for suffix in txt tex c cc C cpp cxx h hh hpp
+do
+        alias -s $suffix=vim
+done
+
+local MOVIE_PLAYER
+for MOVIE_PLAYER in mplayer xine
+do
+        if [[ -x /usr/bin/$MOVIE_PLAYER ]]; then
+                for suffix in rm rmvb mpeg avi mpg wmv
+                do
+                        alias -s $suffix=$MOVIE_PLAYER
+                done
+		break
+        fi
+done
+
+local MUSIC_PLAYER
+for MUSIC_PLAYER in mplayer amarok xmms
+do
+        if [[ -x /usr/bin/$MUSIC_PLAYER ]]; then
+                for suffix in mp3 ogg ape wma rma wav
+                do
+                        alias -s $suffix=$MUSIC_PLAYER
+                done
+		break
+        fi
+done
+
+local IMAGE_VIEWER
+for IMAGE_VIEWER in feh display gqview
+do
+        [[ -z "$DISPLAY" || $TERM = linux ]] && IMAGE_VIEWER=fbi
+        if [[ -x /usr/bin/$IMAGE_VIEWER ]]; then
+                for suffix in jpg jpeg xpm xbm png gif
+                do
+                        alias -s $suffix=$IMAGE_VIEWER
+                done
+		break
+        fi
+done
+
+# dangerous!
+# alias -s sh=sh
+# alias -s rb=ruby
+# alias -s pl=perl
+# alias -s py=python
+
+fi # alias -s
+
+# Global aliases
+# WARNING: global aliases are evil.  Use with caution.
+
+alias -g ...=../..
+alias -g ....=../../..
+alias -g .....=../../../..
+alias -g ......=../../../../..
+
+#  alias -g G='| grep'
+#  alias -g V='| vi -'
+#  alias -g L='| less'
+#  alias -g W='| wc'
+#  alias -g H='| head'
+#  alias -g HH='| head -n $(( +LINES ? LINES - 4 : 20 ))'
+#  alias -g T='| tail'
+#  alias -g X='| xargs'
+#  alias -g Y='yes |'
+#  alias -g N='2>/dev/null'
+#  alias -g NN='&>/dev/null'
+
+# I find this more preferable than expand-abbrev() ;-)
+#bindkey -s 'M ' '| more'
+#bindkey -s 'V ' '| vi -'
+#bindkey -s 'L ' '| less'
+#bindkey -s 'LL' '|& less'
+#bindkey -s 'G ' '| grep'
+#bindkey -s 'W ' '| wc'
+#bindkey -s 'H ' '| head'
+#bindkey -s 'T ' '| tail'
+#bindkey -s 'X ' '| xargs'
+#bindkey -s 'Y ' 'yes |'
+#bindkey -s 'N ' '2>/dev/null'
+#bindkey -s 'NN' '1>/dev/null 2>&1'
+
+# Expand abbreviations on <Space>
+# Prefer this to global alias ;-)
+# typeset -A myabbrev
+# myabbrev=(
+#     "V" "| vi -"
+#     "L" "| less"
+#     "LL" "2>&1 | less"
+#     "G" "| grep"
+#     "W" "| wc"
+#     "H" "| head"
+#     "T" "| tail"
+#     "X" "| xargs"
+#     "Y" "yes |"
+#     "NE" "2>/dev/null"
+#     "NUL" "1>/dev/null 2>&1"
+# )
+#
+# function expand-abbrev () {
+#     emulate -L zsh
+#     setopt extendedglob
+#     typeset MATCH
+#     LBUFFER="${LBUFFER%%(#m)[^[:blank:]]#}${myabbrev[${MATCH}]:-${MATCH}}${KEYS}"
+# }
+# zle -N expand-abbrev
+# bindkey ' ' expand-abbrev
+
+#  bindkey -s "\e\015" "|lv -c\n"
+#  bindkey -s "\e<S-Return>" "\n"
+#  bindkey -s "\e<C-Return>" "\n"
+
+
+## Paging with less / head / tail
+#
+#alias -g L='| less'
+#alias -g LS='| less -S'
+#alias -g EL='|& less'
+#alias -g ELS='|& less -S'
+#
+#alias -g H='| head'
+#alias -g HL='| head -n $(( +LINES ? LINES - 4 : 20 ))'
+#alias -g EH='|& head'
+#alias -g EHL='|& head -n $(( +LINES ? LINES - 4 : 20 ))'
+#
+#alias -g T='| tail'
+#alias -g TL='| tail -n $(( +LINES ? LINES - 4 : 20 ))'
+#alias -g ET='|& tail'
+#alias -g ETL='|& tail -n $(( +LINES ? LINES - 4 : 20 ))'
+#
+## Sorting / counting
+#
+#alias -g C='| wc -l'
+#
+#alias -g S='| sort'
+#alias -g US='| sort -u'
+#alias -g NS='| sort -n'
+#alias -g RNS='| sort -nr'
+#
+## grep, xargs
+#
+#alias -g G='| egrep'
+#alias -g EG='|& egrep'
+#alias -g X='| xargs'
+#alias -g X0='| xargs -0'
+#alias -g XG='| xargs egrep'
+#alias -g X0G='| xargs -0 egrep'
+#
+## Common filenames
+#
+#alias -g DN=/dev/null
+#alias -g VM=/var/log/messages

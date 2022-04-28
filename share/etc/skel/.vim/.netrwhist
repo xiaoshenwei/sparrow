@@ -1,0 +1,8 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =6
+let g:netrw_dirhist_1='/home/hi1/LvQi/time'
+let g:netrw_dirhist_2='/home/hi1/liyali/replace-word.sh'
+let g:netrw_dirhist_3='/home/hi1/liyali/dd.txt'
+let g:netrw_dirhist_4='/home/wfg/Maildir/.inbox'
+let g:netrw_dirhist_5='/home/wfg/crystal-ci/providers/qemu'
+let g:netrw_dirhist_6='/home/wfg/crystal-ci/sparrow/2-network'
