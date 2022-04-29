@@ -1,0 +1,321 @@
+## completions ####
+
+# Setup new style completion system. To see examples of the old style (compctl
+# based) programmable completion, check Misc/compctl-examples in the zsh
+# distribution.
+autoload -U compinit
+compinit
+
+
+# Maximum size of completion listing
+#LISTMAX=0    # Only ask if line would scroll off screen
+LISTMAX=100
+
+# suffixes to ignore {{{
+# An array (colon separated list) containing the suffixes of files to
+# be ignored during filename completion. However, if completion only
+# generates files with suffixes in this list, then these files are
+# completed anyway.
+#fignore=( .out .tmp .aux .toc .lot .lof .blg .bbl .bak .BAK .sav .old .trace .swp \~)
+# }}}
+
+
+
+## 'compctl' with regex
+## For rcs users, co and rlog from the RCS directory.  We don't want to see
+## the RCS and ,v though.
+#compctl -g 'RCS/*(D:s@RCS/@@:s/,v//)' + -g '*(-/D)' co rlog rcs{,diff,merge} revdiff logs mymerge cil
+##  Argument to finger and talk is username@hostname 
+#compctl -x 'N[-1,@]' -k hosts - 's[]' -u -S '' -- finger talk
+
+##########################################################################################
+
+# http://unix.stackexchange.com/questions/162078/stop-zsh-from-completing-parent-directories
+# only attempt completion for path components other than the last one if the path doesn't exist.
+zstyle ':completion:*' accept-exact-dirs true
+
+# Fuzzy match mistyped completions.
+#  zstyle ':completion:*' completer _complete _match _approximate
+zstyle ':completion:*:match:*' original only
+zstyle ':completion:*:approximate:*' max-errors 1 numeric
+
+# Increase the number of errors based on the length of the typed word.
+zstyle -e ':completion:*:approximate:*' max-errors 'reply=($((($#PREFIX+$#SUFFIX)/3))numeric)'
+
+## General completion technique
+## complete as much u can ..
+zstyle ':completion:*' completer _complete _list _oldlist _expand _ignored _match _prefix
+# _correct _approximate 
+## complete less
+#zstyle ':completion:*' completer _expand _complete _list _ignored _approximate
+## complete minimal
+#zstyle ':completion:*' completer _complete _ignored
+
+## allow one error
+#zstyle ':completion:*:approximate:*' max-errors 1 numeric
+## allow one error for every three characters typed in approximate completer
+#  zstyle -e ':completion:*:approximate:*' max-errors \
+	#  'reply=( $(( ($#PREFIX+$#SUFFIX)/3 )) numeric )'
+
+## Separate matches into groups
+zstyle ':completion:*:matches' group 'yes'
+
+## formatting and messages
+zstyle ':completion:*' verbose yes
+zstyle ':completion:*' format '%{[33m%}:: %{[1m%}%d%{[0m%}'
+
+## Describe each match group
+zstyle ':completion:*:descriptions' format $'%{\e[0;31m%}%d%{\e[0m%}'
+
+## Messages/warnings format
+zstyle ':completion:*:messages' format $'%{\e[0;31m%}%d%{\e[0m%}'
+zstyle ':completion:*:warnings' format $'%{\e[0;31m%}!! No matches for: %d%{\e[0m%}'
+zstyle ':completion:*:corrections' format $'%{\e[0;31m%}%d (errors: %e)%{\e[0m%}'
+
+zstyle ':completion:*' select-prompt '%SSelect:  lines: %L  matches: %M  [%p]'
+
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*:*:-command-:*:commands' group-name commands
+zstyle ':completion:*:*:-command-:*:functions' group-name functions
+
+zstyle ':completion:*:*:-command-:*' group-order builtins functions commands
+
+## Describe options in full
+zstyle ':completion:*:options' description 'yes'
+zstyle ':completion:*:options' auto-description '%d'
+#zstyle ':completion:*:options' auto-description '%B%d%b'
+#zstyle ':completion:*:options' auto-description "%{$fg[yellow]%}%d%{$reset_color%}"
+
+zstyle ':completion:*:manuals' separate-sections yes
+
+## Simulate my old dabbrev-expand 3.0.5 patch 
+
+zstyle ':completion:*:history-words' stop yes
+zstyle ':completion:*:history-words' remove-all-dups yes
+zstyle ':completion:*:history-words' list false
+zstyle ':completion:*:history-words' menu yes
+
+## determine in which order the names (files) should be
+## listed and completed when using menu completion.
+## `size' to sort them by the size of the file
+## `links' to sort them by the number of links to the file
+## `modification' or `time' or `date' to sort them by the last modification time
+## `access' to sort them by the last access time
+## `inode' or `change' to sort them by the last inode change time
+## `reverse' to sort in decreasing order
+## If the style is set to any other value, or is unset, files will be
+## sorted alphabetically by name.
+zstyle ':completion:*' file-sort name
+
+## how many completions switch on menu selection
+## use 'long' to start menu compl. if list is bigger than screen
+## or some number to start menu compl. if list has that number
+## of completions (or more).
+#menu will appear only if there are at least 20 matches
+zstyle ':completion:*' menu select=20
+
+## menu completion only if the prefix is valid
+zstyle ':completion:*' insert-unambiguous true
+
+## show original command in list
+zstyle ':completion:*' original true
+
+## remve trailing slashes after a directory
+zstyle ':completion:*' squeeze-slashes true
+
+## complete recent history words first
+zstyle ':completion:*' range 300:30
+
+## almost always preferable if perl is available on your system
+if [[ -x /usr/bin/perl ]]; then
+zstyle ':completion:*' use-perl on
+fi
+
+## case-insensitive (uppercase from lowercase) completion
+#zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+## case-insensitive (all) completion
+#zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+## case-insensitive,partial-word and then substring completion
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|[._-]=* r:|=*' 'r:|[.-]=** r:|=**' 'l:|=* r:|=*'
+
+## when completing inside array or association subscripts,
+## the array elements are more useful than parameters so complete them first:
+zstyle ':completion:*:*:-subscript-:*' tag-order indexes parameters
+
+## insert all expansions for expand completer
+zstyle ':completion:*:expand:*' tag-order all-expansions
+
+## do not show useless urls unless explicitly requested
+zstyle ':completion:*:*:mplayer:*' tag-order files urls
+zstyle ':completion:*:*:w3m:*' tag-order files w3mhistory urls
+
+## ignore completion functions (until the _ignored completer)
+zstyle ':completion:*:functions' ignored-patterns '_*'
+## ignore _functions at first
+#zstyle ':completion:*:*:-command-:*' tag-order 'functions:-non-comp *' functions
+#zstyle ':completion:*:functions-non-comp' ignored-patterns '_*'
+
+## completion caching
+zstyle ':completion::complete:*' use-cache on
+zstyle ':completion::complete:*' cache-path ~/.zcompcache
+
+## add colors to completions
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+
+## don't complete backup files as executables
+zstyle ':completion:*:complete:-command-::commands' ignored-patterns '*\~'
+
+## filename suffixes to ignore during completion (except after rm command)
+zstyle ':completion:*:*:(^rm):*:*files' ignored-patterns \
+	'*?.(o|swp|bak|aux|old|pro|zwc|gcno|porigin)' '*~'
+
+# zstyle ':completion:*:*:rm:*' file-patterns \
+# 	'*.swp:vim-swap-files:vim\ swap\ file {*~,*.bak}:backup-files:backup\ file' \
+# 	'%p(^/):normal-files %p(-/):directories:directory'
+
+# zstyle ':completion:*:*:rm:*' file-patterns \
+# 	'*.swp:vim-swap-files:vim\ swap\ file {*~,*.bak}:backup-files:backup\ file *.o:object-files:object\ file' \
+# 	'%p:all-files'
+
+#zstyle ':completion:*:*:rm:option-recursive-1' file-patterns \
+#	'*(/):directories:directory'
+
+## feed only empty dirs to rmdir
+zstyle ':completion:*:rmdir:*' file-patterns '*(/^F):empty-dirs:empty\ dir' '*(/):directories:directory'
+
+## feed binary files to objdump, nm
+zstyle ':completion:*:(objdump|nm):*' file-patterns \
+	'{*.o,*(*)}:object-files:object\ file *(/):directories:directory'
+
+## offer only normal files, if non exists, then consider dirs
+## it's very convenient for me to have
+## an alias 'e=vim' to activate the dir-ignoring mechanism,
+## and fall back to the normal 'vi' when needed.
+# zstyle ':completion:*:(vim|gvim):*' file-patterns \
+# 	'%p(^/):files' '*(-/):directories:directories' '*:all-files'   
+
+## group normal files, then directories
+ zstyle ':completion:*' file-patterns \
+	 '%p(^/):normal-files *(-/):directories:directory'
+
+## completions for some progs. not in default completion system
+
+zstyle ':completion:*:*:mpg123:*' file-patterns \
+	'*.(mp3|MP3):mp3-files:mp3\ file *(-/):directories:directory'
+
+zstyle ':completion:*:*:xmms:*' file-patterns \
+	'*.(mp3|MP3|ogg|OGG|ape|APE):music-files:music\ file *(-/):directories:directory'
+
+zstyle ':completion:*:*:(gimp|xv|feh):*' file-patterns \
+	'*.(jpg|JPG|jpe|jpeg|JPEG|png|PNG|gif|GIF|tif|TIF|tiff|TIFF|bmp|BMP|xpm):picture-files:picture\ file *(-/):directories:directory'
+
+## generic completions for programs which understand GNU long options(--help)
+compdef _gnu_generic slrnpull df du apt-file feh gimp
+
+## use function _pids to complete process IDs
+compdef _pids pidof
+
+## complete man pages
+compdef _man pinfo
+
+## complete debian packages
+compdef '_deb_packages avail' ad au av
+compdef '_deb_packages installed' dl dL
+
+## start/stop services in /etc/init.d/
+compdef _services start stop
+
+# type debian/rules <TAB> inside a source package:
+if [[ -f /etc/debian_version ]]; then
+	_debian_rules() { local words=(make -f debian/rules) _make }
+	compdef _debian_rules debian/rules
+fi
+
+#todo...
+#zstyle ':completion:*:complete:aptitude:*install*' packageset avail
+
+## on processes completion complete all user processes
+#zstyle ':completion:*:processes' command 'ps -au$USER'
+#zstyle ':completion:*:processes' command 'ps -o pid,s,nice,stime,args -u$USER'
+zstyle ':completion:*:processes' command 'ps -u $USER -o pid,s,%cpu,%mem,tty,stime,cmd'
+
+## When completing process IDs I normally want to fall into menu selection, too: 
+# zstyle ':completion:*:*:*:*:processes' menu yes select
+# zstyle ':completion:*:*:kill:*' menu yes select 
+
+zstyle ':completion:*:*:*:*:*' menu yes select
+
+## but I also want to make sure that I always get the list,
+## even if I complete on a command name prefix instead of a PID
+## and there is only one possible completion, which is inserted right away.
+zstyle ':completion:*:*:*:*:processes' force-list always
+zstyle ':completion:*:kill:*' force-list always
+
+
+## add colors to processes for kill completion
+##   zstyle ":completion:*:*:$command:*:$tag" list-colors "=(#b)\ 
+##   =$zshregex\ 
+##   =$default_color_escape_number\ 
+##   =$color_number_for_letters_in_first_bracket-pair\ 
+##   =$color_number_for_letters_in_second_bracket-pair" "..." 
+zstyle ':completion:*:*:*:*:processes' list-colors "=(#b) #([0-9]#)*=$color[cyan]=$color[bold];$color[red]"
+
+## you might want to fall into menu selection immediately and to have the words sorted by time:
+zstyle ':completion:*:*:xdvi:*' menu yes select
+zstyle ':completion:*:*:xdvi:*' file-sort time
+
+## With commands like `rm' it's annoying if one gets offered the same filename again
+## even if it is already on the command line. To avoid that:
+zstyle ':completion:*:(rm*|vi|vim|diff):*' ignore-line other
+
+## complete the names of parameters we have special completions for in parameter assignments
+zstyle ':completion::*:(-command-|export):*' fake-parameters ${${${_comps[(I)-value-*]#*,}%%,*}:#-*-}
+
+## cd will never select the parent directory : (ie cd ../<TAB>
+zstyle ':completion:*:cd:*' ignore-parents parent pwd
+
+## Prevent CVS files/directories from being completed 
+#  zstyle ':completion:*:(all-|)files' ignored-patterns '(|*/)CVS' 
+#  zstyle ':completion:*:cd:*'         ignored-patterns '(*/)#CVS' 
+
+zstyle ':completion:*:directories' ignored-patterns '/kbuild'
+
+zstyle ':completion:*:cd:*' tag-order \
+	local-directories directory-stack named-directories path-directories
+
+
+# zstyle ':completion:*:mplayer:*:bookmark' mplayer-bookmark $ZDOTDIR/mplayer-bookmark
+# zstyle ':completion:*:urls' urls $ZDOTDIR/urls
+
+
+## mail contacts
+#  if [[ -f ~/.mutt/mail_aliases ]]; then
+#    zstyle ':completion:*:mutt:*' users \
+#        ${${${(f)"$(<~/.mutt/mail_aliases)"}#alias[[:space:]]}%%[[:space:]]*}
+##  else
+##    echo "warning: no mutt-aliases (~/.mutt/mail_aliases) found."
+#  fi
+if [[ -e ~/.abook/addressbook && -x /usr/bin/perl ]]; then
+zstyle -e ':completion::complete:mutt:*:' users \
+	'reply=($(perl -ne '\''print "$1\n" 
+			if /^email=(\S+)$/;'\'' ~/.abook/addressbook) )'
+fi
+
+## common usernames
+#users=(wfg)
+#zstyle ':completion:*' users $users
+zstyle ':completion:*:*:*:users' ignored-patterns \
+    adm apache backup bin daemon Debian-exim fetchmail games gdm gnats halt \
+	ident irc junkbust list lp mail mailnull man named news nfsnobody nobody \
+	nscd ntp operator pcap postgres proxy radvd rpc rpcuser rpm shutdown \
+	squid sshd sync sys uucp vcsa www-data xfs
+
+## common hostnames
+hosts=( `egrep -v '(ip6|localhost|^#|^$)' </etc/hosts` )
+zstyle ':completion:*' hosts $hosts
+
+## ssh hosts
+if [[ -f ~/.ssh/known_hosts ]]; then
+ssh_hosts=(${${${${(f)"$(<$HOME/.ssh/known_hosts)"}:#[0-9]*}%%\ *}%%,*})
+zstyle ':completion:*:complete:(ssh|scp|rsync):*:hosts' hosts $ssh_hosts
+fi

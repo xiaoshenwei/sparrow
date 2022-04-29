@@ -1,0 +1,105 @@
+## Autoload zsh modules when they are referenced
+
+# Builtins for manipulating POSIX.1e (POSIX.6) capability (privilege) sets.
+zmodload -ab zsh/cap cap getcap setcap
+
+# A builtin that can clone a running shell onto another terminal.
+zmodload -ab zsh/clone clone
+
+# The compctl builtin for controlling completion.
+zmodload -ab zsh/compctl compctl compcall
+
+# The basic completion code.
+zmodload -i zsh/complete
+
+# Completion listing extensions.
+zmodload -i zsh/complist
+
+# A module with utility builtins needed for the shell function based completion system.
+zmodload -ab zsh/computil comparguments compdescribe \
+	compfiles compgroups compquote comptags comptry compvalues
+
+# Some date/time commands and parameters.
+zmodload -ab zsh/datetime strftime
+
+# A ZLE function duplicating EMACS' zap-to-char.
+zmodload -af zsh/deltochar delete-to-char zap-to-char
+
+# An example of how to write a module.
+#zmodload -ab zsh/example example
+
+# Some basic file manipulation commands as builtins.
+#zmodload zsh/files
+
+# Access to external files via a special associative array.
+zmodload -ap zsh/mapfile mapfile
+
+# Standard scientific functions for use in mathematical evaluations.
+if [[ $ZSH_VERSION > 4.2 ]]; then
+zmodload -af zsh/mathfunc abs int float acos acosh asin asinh atan atanh \
+	cbrt ceil cos cosh erf erfc exp expm1 fabs floor gamma j0 j1 lgamma log log10  \
+	log1p logb sin sinh sqrt tan tanh y0 y1 ilogb signgam \
+	copysign fmod hypot nextafter jn yn ldexp scalb abs  float int rand rand48
+elif [[ $ZSH_VERSION > 4 ]]; then
+zmodload -af zsh/mathfunc acos acosh asin asinh atan atanh \
+	cbrt ceil cos cosh erf erfc exp expm1 fabs floor gamma j0 j1 lgamma log log10  \
+	log1p logb sin sinh sqrt tan tanh y0 y1 ilogb signgam \
+	copysign fmod hypot nextafter jn yn ldexp scalb abs  float int rand rand48
+fi
+
+# Access to internal hash tables via special associative arrays.
+zmodload -ap zsh/parameter  options commands functions dis_functions \
+	dis_builtins reswords dis_reswords dis_aliases galiases \
+	dis_galiases saliases dis_saliases parameters modules dirstack history \
+	historywords jobdirs jobtexts jobstates nameddirs userdirs
+
+
+# Interface to the PCRE library.
+zmodload -ab zsh/pcre  pcre_compile pcre_study pcre_match
+
+# A builtin that provides a timed execution facility within the shell.
+zmodload -ab zsh/sched  sched
+
+# Manipulation of Unix domain sockets
+zmodload -ab zsh/net/socket  zsocket
+
+# A builtin command interface to the stat system call.
+zmodload -ab zsh/stat  stat
+
+# A builtin interface to various low-level system features.
+zmodload -ab zsh/system  syserror sysread syswrite
+zmodload -ap zsh/system  errnos
+
+# Manipulation of TCP sockets
+zmodload -ab zsh/net/tcp  ztcp
+
+# Interface to the termcap database.
+zmodload -ab zsh/termcap echotc
+zmodload -ap zsh/termcap termcap
+
+# Interface to the terminfo database.
+#zmodload -ab zsh/terminfo echoti
+#zmodload -ap zsh/terminfo terminfo
+zmodload -i zsh/terminfo
+
+# A builtin FTP client.
+zmodload -ab zsh/zftp zftp
+
+# The Zsh Line Editor, including the bindkey and vared builtins.
+zmodload -i zsh/zle
+
+# Access to internals of the Zsh Line Editor via parameters.
+zmodload -ap zsh/zleparameter  keymaps widgets
+
+# A module allowing profiling for shell functions.
+zmodload -ab zsh/zprof  zprof
+
+# A builtin for starting a command in a pseudo-terminal.
+zmodload -ab zsh/zpty  zpty
+
+# Block and return when file descriptors are ready.
+zmodload -ab zsh/zselect  zselect
+
+# Some utility builtins, e.g. the one for supporting configuration via styles.
+zmodload -i zsh/zutil
+

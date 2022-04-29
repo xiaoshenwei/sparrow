@@ -1,0 +1,159 @@
+# A man and his 'functions' ;)
+
+# Where to look for autoloaded function definitions
+fpath=($SHELL_DIR/zsh_functions $fpath) ## EDIT ## or comment if u don't need it.
+
+# Autoload all shell functions from all directories in $fpath (following
+# symlinks) that have the executable bit on (the executable bit is not
+# necessary, but gives you an easy way to stop the autoloading of a
+# particular shell function). $fpath should not be empty for this to work.
+for func in $^fpath/*(N-.x:t); autoload -U $func
+
+
+# Sweet trick from zshwiki.org :-)
+cd () {
+  if (( $# != 1 )) || [[ "$1" =~ ^-[0-9]? ]]; then
+    builtin cd "$@"
+    return
+  fi
+
+  if [[ -d "$1" ]]; then
+    builtin cd "$1"
+  elif [[ -d "$1:h" ]]; then
+    echo "file not exist; cd into parent dir instead"
+    builtin cd "$1:h"
+  else
+    builtin cd "$1"
+  fi
+}
+
+po () {
+  popd "$@"
+  dirs -v
+}
+
+h () {
+	if [[ $# = 0 ]]; then
+		history -dD -$(( +LINES ? LINES - 4 : 20 ))
+	else
+		fc -lm "$*" 1 -1
+	fi
+}
+
+function window_size () {
+    emulate -L zsh
+    function my_print () {
+        for ((i = 1; i <= ${#1}; i++)); do
+            print -n -- ${1[${i}]}
+            sleep 0.005
+        done
+        print
+    }
+    my_print '1'
+    for ((j = 2; j < LINES; j++)); do
+	if [ $((j%10)) -eq 0 ]; then
+	    my_print $j
+        else
+	    my_print '|'
+        fi
+    done
+    my_print "${j}${(l:COLUMNS-${#COLUMNS}-${#j}::-:)}${COLUMNS}"
+	sleep 1
+}
+
+# Usage: url < file_with_url
+# not perfect :(
+function url () {
+    emulate -L zsh
+    setopt extendedglob
+    typeset read_line
+    typeset -a urls
+    while read -r read_line; do
+        urls=(${(MS)${=read_line}##(https|http|ttp|tp|p)://[-_.~!*\'()a-zA-Z0-9;/?:@&=+$,%#]##})
+        for i in ${=urls/(#s)(p|tp|ttp)/http}; do
+            [[ -n $i ]] && print -- $i
+        done
+    done
+}
+
+function replace-string () {
+    emulate -L zsh
+    setopt extendedglob
+    autoload -U read-from-minibuffer
+    read-from-minibuffer "replace-string: "
+    typeset FROM=${REPLY}
+    read-from-minibuffer "replace-string: ${FROM} with "
+    typeset TO=${REPLY}
+    BUFFER=${BUFFER//${FROM}/${TO}}
+}
+zle -N replace-string
+
+
+# zsh with perl-regex - check it; e.g.:
+# regcheck '\s\d\.\d{3}\.\d{3} Euro' ' 1.000.000 Euro'
+function regcheck() {
+	zmodload -i zsh/pcre
+	pcre_compile $1 && \
+	pcre_match $2 && echo "regex matches" || echo "regex does not match"
+}
+
+# list files which have been modified within the last x days
+function new() {
+	print -l *(m-$1)
+}
+
+
+# press F10 and calculate :)
+arith-eval-echo() {
+	LBUFFER="${LBUFFER}echo \$(( "
+	RBUFFER=" ))$RBUFFER"
+}
+zle -N arith-eval-echo
+bindkey "^[[21~" arith-eval-echo
+
+# 040514 press esc-' and get a "'«cursor»'"
+quoteit() { LBUFFER="$LBUFFER'"; RBUFFER="' $RBUFFER" }
+zle -N quoteit
+bindkey "^[\'" quoteit
+
+# Globbing is simple? Sure .. See zshexpn(1) /Glob Qualifiers for details and
+# come back ;)
+function H-Glob()
+{
+echo -e "
+     /      directories
+      .      plain files
+      @      symbolic links
+      =      sockets
+      p      named pipes (FIFOs)
+      *      executable plain files (0100)
+      %      device files (character or block special)
+      %b     block special files
+      %c     character special files
+      r      owner-readable files (0400)
+      w      owner-writable files (0200)
+      x      owner-executable files (0100)
+      A      group-readable files (0040)
+      I      group-writable files (0020)
+      E      group-executable files (0010)
+      R      world-readable files (0004)
+      W      world-writable files (0002)
+      X      world-executable files (0001)
+      s      setuid files (04000)
+      S      setgid files (02000)
+      t      files with the sticky bit (01000)
+ print *(m-1)          # Dateien, die vor bis zu einem Tag modifiziert wurden.
+ print *(a1)           # Dateien, auf die vor einem Tag zugegriffen wurde.
+ print *(@)            # Nur Links
+ print *(Lk+50)        # Dateien die ueber 50 Kilobytes grosz sind
+ print *(Lk-50)        # Dateien die kleiner als 50 Kilobytes sind
+ print **/*.c          # Alle *.c - Dateien unterhalb von \$PWD
+ print **/*.c~file.c   # Alle *.c - Dateien, aber nicht 'file.c'
+ print (foo|bar).*     # Alle Dateien mit 'foo' und / oder 'bar' am Anfang
+ print *~*.*           # Nur Dateien ohne '.' in Namen
+ chmod 644 *(.^x)      # make all non-executable files publically readable
+ print -l *(.c|.h)     # Nur Dateien mit dem Suffix '.c' und / oder '.h'
+ print **/*(g:users:)  # Alle Dateien/Verzeichnisse der Gruppe >users<
+ echo /proc/*/cwd(:h:t:s/self//) # Analog zu >ps ax | awk '{print $1}'<"
+}
+
